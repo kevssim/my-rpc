@@ -23,8 +23,8 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
     private final Map<String, Object> handlerMap;
 
     private final ExecutorService executors = new ThreadPoolExecutor(
-            1,
-            1,
+            10,
+            30,
             1,
             TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(200),
@@ -41,40 +41,36 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
         RpcRequest rpcRequest = (RpcRequest) msg;
         logger.info(rpcRequest.toString());
 
-        RpcResponse response = new RpcResponse();
-        response.setSerialType(1);
-        try {
-            Object result = null;
-            FutureTask<Object> futureTask = new FutureTask<>(() -> {
-                try {
-                    return handle(rpcRequest);
-                } catch (InvocationTargetException e) {
-                    throw new Exception(e.getTargetException());
-                }
-            });
-            //执行任务
-            executors.submit(futureTask);
-            result = futureTask.get(2, TimeUnit.SECONDS);
+        CompletableFuture<RpcResponse> future = CompletableFuture.supplyAsync(() -> {
+            RpcResponse response = new RpcResponse();
+            response.setSerialType(1);
+            try {
+                Object result = null;
 
-            //不使用超时机制，性能会更高
-            //result = handle(rpcRequest);
+                //不使用超时机制，性能会更高
+                result = handle(rpcRequest);
 
-            response.setRequestId(rpcRequest.getRequestId());
-            response.setStatus(200);
-            response.setMessage("success");
-            response.setData(result);
-        } catch (TimeoutException e) {
-            response.setRequestId(rpcRequest.getRequestId());
-            response.setStatus(500);
-            response.setMessage("请求处理超时");
-        } catch (Exception e) {
-            response.setRequestId(rpcRequest.getRequestId());
-            response.setStatus(500);
-            response.setMessage(e.getMessage());
-        }
+                response.setRequestId(rpcRequest.getRequestId());
+                response.setStatus(200);
+                response.setMessage("success");
+                response.setData(result);
+            } catch (TimeoutException e) {
+                response.setRequestId(rpcRequest.getRequestId());
+                response.setStatus(500);
+                response.setMessage("请求处理超时");
+            } catch (Exception e) {
+                response.setRequestId(rpcRequest.getRequestId());
+                response.setStatus(500);
+                response.setMessage(e.getMessage());
+            }
+            return response;
+        }, executors);
+        future.thenApply((rpcResponse) -> {
+            return ctx.channel().writeAndFlush(rpcResponse);
+        });
 
-        logger.info("发送响应数据：" + response.toString());
-        ctx.channel().writeAndFlush(response);
+        //logger.info("发送响应数据：" + response.toString());
+        //ctx.channel().writeAndFlush(response);
     }
 
     private Object handle(RpcRequest rpcRequest) throws Exception {

@@ -11,7 +11,6 @@ public class HelloServiceImpl implements HelloService {
     @Override
     public String hello(String mes) throws Exception {
         //System.out.println("收到消息：" + mes + " " + (++count));
-        Thread.sleep(2000);
         return "你好客户端，我已经收到你的消息[" + mes + "] 第" + (++count) + "次";
     }
 

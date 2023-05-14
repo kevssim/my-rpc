@@ -2,8 +2,6 @@ package github.kevssim.transport.Client;
 
 import github.kevssim.protocol.message.RpcRequest;
 import github.kevssim.protocol.message.RpcResponse;
-import github.kevssim.transport.Server.UnprocessedRequests;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;

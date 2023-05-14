@@ -1,9 +1,10 @@
-package github.kevssim.transport.Server;
+package github.kevssim.transport.Client;
 
 import github.kevssim.protocol.message.RpcResponse;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 public class UnprocessedRequests {
     static final ConcurrentHashMap<String, CompletableFuture<RpcResponse>> unprocessedResponseFutures = new ConcurrentHashMap<>();
